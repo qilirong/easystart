@@ -107,8 +107,8 @@ jobs:
       if: steps.check_toolchain.outputs.toolchain_exists == 'false'
       run: |
         cd openwrt
-        # 使用保守的并行度，避免内存问题
-        make toolchain/install -j2 V=s || make toolchain/install -j1 V=s
+        # 使用单线程构建，避免内存问题
+        make toolchain/install -j1 V=s
 
     - name: Build plugin
       run: |
