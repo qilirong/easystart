@@ -130,7 +130,7 @@ jobs:
           - 构建时间: ${{ github.run_started_at }}
           - ${{ matrix.target }} 架构
         files: |
-          openwrt/bin/packages/*/luci-app-easystart*.ipk
+          openwrt/bin/packages/**/luci-app-easystart*.ipk
         draft: false
         prerelease: false
       env:
