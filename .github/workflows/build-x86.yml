@@ -1,0 +1,78 @@
+name: Build OpenWrt Plugin for x86_64
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-x86:
+    name: Build for x86_64
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
+
+    - name: Clone OpenWrt source
+      run: |
+        git clone https://github.com/openwrt/openwrt.git
+        cd openwrt
+        git checkout openwrt-23.05
+
+    - name: Add plugin to OpenWrt
+      run: |
+        cd openwrt
+        mkdir -p package/luci-app-easystart
+        cp -r ../luci-app-easystart/* package/luci-app-easystart/
+
+    - name: Update feeds
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Configure build for x86_64
+      run: |
+        cd openwrt
+        echo "CONFIG_TARGET_x86=y" > .config
+        echo "CONFIG_TARGET_x86_64=y" >> .config
+        echo "CONFIG_TARGET_x86_64_generic=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
+        make defconfig
+
+    - name: Build toolchain
+      run: |
+        cd openwrt
+        make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
+
+    - name: Build plugin for x86_64
+      run: |
+        cd openwrt
+        make package/luci-app-easystart/compile -j$(nproc) V=s
+
+    - name: Upload x86_64 artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: luci-app-easystart-x86_64
+        path: openwrt/bin/packages/*/luci-app-easystart*.ipk
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_id }}-x86_64
+        name: Release ${{ github.run_id }} (x86_64)
+        body: |
+          自动构建发布
+          - 构建时间: ${{ github.run_started_at }}
+          - x86_64 架构
+        files: |
+          openwrt/bin/packages/*/luci-app-easystart*.ipk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

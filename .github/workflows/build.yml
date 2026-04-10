@@ -72,11 +72,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
 
-    - name: Clone Cudy OpenWrt source
+    - name: Clone OpenWrt source
       run: |
-        git clone https://github.com/cudytech/openwrt.git
+        git clone https://github.com/openwrt/openwrt.git
         cd openwrt
-        git checkout tr3000
+        git checkout openwrt-23.05
 
     - name: Add plugin to OpenWrt
       run: |
