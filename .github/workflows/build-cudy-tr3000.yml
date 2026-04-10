@@ -22,11 +22,19 @@ jobs:
         sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
         sudo apt-get install -y flex bison texinfo
 
+    - name: Add swap space for memory optimization
+      run: |
+        sudo fallocate -l 2GB /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+
     - name: Clone OpenWrt source with shallow clone
       run: |
-        git clone --depth 1 --branch main https://github.com/openwrt/openwrt.git
+        git clone --depth 1 --branch openwrt-23.05 https://github.com/openwrt/openwrt.git
         cd openwrt
-        git checkout main
+        git checkout openwrt-23.05
 
     - name: Cache downloads
       uses: actions/cache@v4
@@ -55,10 +63,8 @@ jobs:
     - name: Download prebuilt toolchain
       run: |
         cd openwrt
-        # 下载适合 mediatek mt798x 的预编译 toolchain
         wget https://downloads.openwrt.org/releases/23.05.0/targets/mediatek/mt798x/openwrt-sdk-23.05.0-mediatek-mt798x_gcc-12.3.0_musl.Linux-x86_64.tar.xz
         tar -xJf openwrt-sdk-23.05.0-mediatek-mt798x_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-        # 将 toolchain 复制到指定位置
         cp -r openwrt-sdk-23.05.0-mediatek-mt798x_gcc-12.3.0_musl.Linux-x86_64/staging_dir/toolchain-* staging_dir/
 
     - name: Add plugin to OpenWrt
@@ -80,12 +86,15 @@ jobs:
         echo "CONFIG_TARGET_mediatek_mt798x=y" >> .config
         echo "CONFIG_TARGET_mediatek_mt798x_DEVICE_cudy-tr3000-v1=y" >> .config
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
+        # 禁用 ccache 以节省内存
+        echo "CONFIG_CCACHE=n" >> .config
         make defconfig
 
     - name: Build plugin
       run: |
         cd openwrt
-        make package/luci-app-easystart/compile -j$(nproc) V=s
+        # 使用单线程编译，避免内存溢出
+        make package/luci-app-easystart/compile -j1 V=s 2>&1
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -99,6 +108,7 @@ jobs:
         find bin/packages -name "luci-app-easystart*.ipk"
 
     - name: Create release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_id }}-cudy-tr3000

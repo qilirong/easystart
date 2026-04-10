@@ -3,7 +3,6 @@ module('luci.controller.router-mode', package.seeall)
 function index()
     entry({'admin', 'router-mode'}, alias('admin', 'router-mode', 'general'), _('简易设置'), 10)
     entry({'admin', 'router-mode', 'general'}, cbi('router-mode/general'), _('模式配置'), 1)
-    entry({'admin', 'router-mode', 'backup'}, cbi('router-mode/backup'), _('配置备份'), 2)
     entry({'admin', 'router-mode', 'apply'}, call('action_apply')).dependent = false
     entry({'admin', 'router-mode', 'status'}, call('action_status')).dependent = false
 end
@@ -33,8 +32,6 @@ function action_apply()
         cmd = cmd .. 'bypass "' .. ipaddr .. '" "' .. gateway .. '"'
     elseif mode == 'bridge' then
         cmd = cmd .. 'bridge'
-    elseif mode == 'restore' then
-        cmd = cmd .. 'restore'
     end
     
     local fp = io.popen(cmd .. ' 2>&1')
