@@ -36,24 +36,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-downloads-x86_64-
 
-    - name: Cache toolchain
-      uses: actions/cache@v4
-      with:
-        path: |
-          openwrt/build_dir/toolchain
-          openwrt/staging_dir/toolchain-*
-        key: ${{ runner.os }}-toolchain-x86_64-openwrt-23.05
-        restore-keys: |
-          ${{ runner.os }}-toolchain-x86_64-
-
-    - name: Cache staging directory
-      uses: actions/cache@v4
-      with:
-        path: openwrt/staging_dir
-        key: ${{ runner.os }}-staging-x86_64-openwrt-23.05
-        restore-keys: |
-          ${{ runner.os }}-staging-x86_64-
-
     - name: Cache build directory
       uses: actions/cache@v4
       with:
@@ -69,6 +51,15 @@ jobs:
         key: ${{ runner.os }}-feeds-x86_64-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
           ${{ runner.os }}-feeds-x86_64-
+
+    - name: Download prebuilt toolchain
+      run: |
+        cd openwrt
+        # 下载适合 x86_64 的预编译 toolchain
+        wget https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+        tar -xJf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+        # 将 toolchain 复制到指定位置
+        cp -r openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/staging_dir/toolchain-* staging_dir/
 
     - name: Add plugin to OpenWrt
       run: |
@@ -90,25 +81,6 @@ jobs:
         echo "CONFIG_TARGET_x86_64_generic=y" >> .config
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         make defconfig
-
-    - name: Check if toolchain exists
-      id: check_toolchain
-      run: |
-        cd openwrt
-        if [ -d "staging_dir/toolchain-*" ]; then
-          echo "Toolchain already exists, skipping build"
-          echo "toolchain_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "Toolchain not found, will build"
-          echo "toolchain_exists=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Build toolchain
-      if: steps.check_toolchain.outputs.toolchain_exists == 'false'
-      run: |
-        cd openwrt
-        # 使用单线程构建，避免内存问题
-        make toolchain/install -j1 V=s
 
     - name: Build plugin
       run: |
