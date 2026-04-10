@@ -106,3 +106,32 @@ jobs:
       with:
         name: luci-app-easystart-cudy-tr3000
         path: openwrt/bin/packages/*/luci-app-easystart*.ipk
+
+  release:
+    name: Create Release
+    needs: [build-x86, build-cudy-tr3000]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        body: |
+          自动构建发布
+          - x86_64 架构
+          - Cudy TR3000 架构
+        files: |
+          artifacts/luci-app-easystart-x86_64/*.ipk
+          artifacts/luci-app-easystart-cudy-tr3000/*.ipk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
