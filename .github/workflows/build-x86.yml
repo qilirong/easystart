@@ -24,17 +24,20 @@ jobs:
 
     - name: Add swap space for memory optimization
       run: |
-        # 尝试创建 2GB swap 文件，如果失败则使用 dd 命令
-        if sudo fallocate -l 2GB /swapfile 2>/dev/null; then
-          echo "Successfully created swap file with fallocate"
+        # 尝试创建 2GB swap 文件，忽略错误继续执行
+        echo "Attempting to create swap space..."
+        sudo fallocate -l 2GB /swapfile 2>/dev/null || true
+        if [ -f /swapfile ]; then
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile 2>/dev/null || true
+          sudo swapon /swapfile 2>/dev/null || true
+          free -h
         else
-          echo "fallocate failed, using dd instead"
-          sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+          echo "Swap file creation failed, continuing without swap..."
+          free -h
         fi
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        free -h
+        echo "Swap space setup completed (or skipped)"
+      continue-on-error: true
 
     - name: Clone OpenWrt source with shallow clone
       run: |
