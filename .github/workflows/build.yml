@@ -54,8 +54,10 @@ jobs:
     - name: Cache toolchain
       uses: actions/cache@v4
       with:
-        path: openwrt/build_dir/toolchain
-        key: ${{ runner.os }}-toolchain-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
+        path: |
+          openwrt/build_dir/toolchain
+          openwrt/staging_dir/toolchain-*
+        key: ${{ runner.os }}-toolchain-${{ matrix.target }}-${{ matrix.branch }}
         restore-keys: |
           ${{ runner.os }}-toolchain-${{ matrix.target }}-
 
@@ -63,7 +65,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: openwrt/staging_dir
-        key: ${{ runner.os }}-staging-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
+        key: ${{ runner.os }}-staging-${{ matrix.target }}-${{ matrix.branch }}
         restore-keys: |
           ${{ runner.os }}-staging-${{ matrix.target }}-
 
