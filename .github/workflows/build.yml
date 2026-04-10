@@ -104,7 +104,20 @@ jobs:
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         make defconfig
 
+    - name: Check if toolchain exists
+      id: check_toolchain
+      run: |
+        cd openwrt
+        if [ -d "staging_dir/toolchain-*" ]; then
+          echo "Toolchain already exists, skipping build"
+          echo "toolchain_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Toolchain not found, will build"
+          echo "toolchain_exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Build toolchain
+      if: steps.check_toolchain.outputs.toolchain_exists == 'false'
       run: |
         cd openwrt
         make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
