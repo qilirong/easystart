@@ -108,6 +108,8 @@ jobs:
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         # 禁用 ccache 以节省内存
         echo "CONFIG_CCACHE=n" >> .config
+        # 禁用 toolchain 编译，使用预编译的 toolchain
+        echo "CONFIG_TOOLCHAIN=y" >> .config
         make defconfig
 
     - name: Build plugin
@@ -116,6 +118,8 @@ jobs:
         # 使用单线程编译，避免内存溢出
         # 只编译插件，不编译依赖和 toolchain
         make package/luci-app-easystart/compile -j1 V=s IGNORE_ERRORS=1 2>&1 || true
+        # 尝试直接安装插件，跳过依赖编译
+        make package/luci-app-easystart/install -j1 V=s IGNORE_ERRORS=1 2>&1 || true
         echo "Build completed (or failed)"
       continue-on-error: true
 
