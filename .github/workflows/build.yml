@@ -52,7 +52,7 @@ jobs:
         make package/luci-app-easystart/compile V=s
 
     - name: Upload x86_64 artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: luci-app-easystart-x86_64
         path: openwrt/bin/packages/*/luci-app-easystart*.ipk
@@ -102,7 +102,7 @@ jobs:
         make package/luci-app-easystart/compile V=s
 
     - name: Upload Cudy TR3000 artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: luci-app-easystart-cudy-tr3000
         path: openwrt/bin/packages/*/luci-app-easystart*.ipk
@@ -115,7 +115,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts
 
