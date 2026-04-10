@@ -24,6 +24,14 @@ jobs:
         cd openwrt
         git checkout openwrt-23.05
 
+    - name: Cache toolchain
+      uses: actions/cache@v4
+      with:
+        path: openwrt/build_dir/toolchain
+        key: ${{ runner.os }}-toolchain-x86_64-${{ hashFiles('openwrt/include/target.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-toolchain-x86_64-
+
     - name: Add plugin to OpenWrt
       run: |
         cd openwrt
