@@ -1,10 +1,10 @@
-module('luci.controller.router-mode', package.seeall)
+module('luci.controller.easystart', package.seeall)
 
 function index()
-    entry({'admin', 'router-mode'}, alias('admin', 'router-mode', 'general'), _('简易设置'), 10)
-    entry({'admin', 'router-mode', 'general'}, cbi('router-mode/general'), _('模式配置'), 1)
-    entry({'admin', 'router-mode', 'apply'}, call('action_apply')).dependent = false
-    entry({'admin', 'router-mode', 'status'}, call('action_status')).dependent = false
+    entry({'admin', 'easystart'}, alias('admin', 'easystart', 'general'), _('简易设置'), 10)
+    entry({'admin', 'easystart', 'general'}, cbi('easystart/general'), _('模式配置'), 1)
+    entry({'admin', 'easystart', 'apply'}, call('action_apply')).dependent = false
+    entry({'admin', 'easystart', 'status'}, call('action_status')).dependent = false
 end
 
 function action_apply()
@@ -17,7 +17,7 @@ function action_apply()
     local gateway = luci.http.formvalue('gateway')
     local dns = luci.http.formvalue('dns')
     
-    local cmd = '/usr/bin/router-mode-switch.sh '
+    local cmd = '/usr/bin/easystart-switch.sh '
     
     if mode == 'main' then
         cmd = cmd .. 'main '

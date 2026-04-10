@@ -1,4 +1,4 @@
-config router-mode 'general'
+config easystart 'general'
     option mode 'main'
     option proto 'dhcp'
     option pppoe_username ''

@@ -15,7 +15,7 @@ NC="\033[0m"
 
 # 日志函数
 log() {
-    echo "${BLUE}[Router Mode Switch]${NC} $1"
+    echo "${BLUE}[EasyStart]${NC} $1"
 }
 
 log_error() {
@@ -173,7 +173,7 @@ setup_main_router() {
 }
 
 # 旁路由模式
-setup旁路_router() {
+setup_bypass_router() {
     log "配置旁路由模式..."
     
     # 配置网络
@@ -272,7 +272,7 @@ main() {
             ;;
         bypass)
             backup_config
-            setup旁路_router "$2" "$3"
+            setup_bypass_router "$2" "$3"
             ;;
         bridge)
             backup_config

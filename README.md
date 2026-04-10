@@ -27,7 +27,7 @@ OpenWrt 简单设置插件，支持三种常用路由模式的一键切换：
 
 ```bash
 opkg update
-opkg install luci-app-router-mode
+opkg install luci-app-easystart
 ```
 
 ### 方法二：手动安装
@@ -37,13 +37,13 @@ opkg install luci-app-router-mode
 3. 执行安装命令：
 
 ```bash
-opkg install luci-app-router-mode_1.0-1_all.ipk
+opkg install luci-app-easystart_1.0-1_all.ipk
 ```
 
 ## 使用方法
 
 1. 登录 OpenWrt 后台管理界面
-2. 进入 **网络 → 路由模式切换**
+2. 进入 **网络 → 简易设置**
 3. 在 **模式配置** 页面选择需要的工作模式
 4. 填写必要的参数（如 PPPoE 账号、旁路由静态 IP）
 5. 点击 **一键应用配置** 按钮

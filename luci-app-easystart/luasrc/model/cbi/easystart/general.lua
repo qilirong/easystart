@@ -5,7 +5,7 @@ require 'luci.i18n'
 -- 加载翻译
 local _ = luci.i18n.translate
 
-m = Map('router-mode', _('简易设置'), _('一键切换路由器工作模式，支持传统路由、旁路由、桥接模式'))
+m = Map('easystart', _('简易设置'), _('一键切换路由器工作模式，支持传统路由、旁路由、桥接模式'))
 
 -- 状态信息
 s = m:section(TypedSection, 'status', _('当前状态'))
@@ -13,9 +13,9 @@ s.anonymous = true
 
 current_mode = s:option(DummyValue, 'current_mode', _('当前工作模式'))
 current_mode.value = function()
-    local status = luci.http.getenv('REQUEST_URI'):match('/admin/router%-mode/status')
+    local status = luci.http.getenv('REQUEST_URI'):match('/admin/easystart/status')
     if status then
-        local data = luci.sys.exec('curl -s http://localhost/cgi-bin/luci/admin/router-mode/status')
+        local data = luci.sys.exec('curl -s http://localhost/cgi-bin/luci/admin/easystart/status')
         local json = luci.jsonc.parse(data)
         if json and json.mode then
             if json.mode == 'main' then return _('传统路由模式')
@@ -112,7 +112,7 @@ function apply.write(self, section, value)
     end
     
     -- 调用后端脚本
-    local url = '/cgi-bin/luci/admin/router-mode/apply'
+    local url = '/cgi-bin/luci/admin/easystart/apply'
     local data = { mode = mode, proto = proto, username = username, password = password, ipaddr = ipaddr, netmask = netmask, gateway = gateway, dns = dns }
     
     luci.http.redirect(url .. '?' .. luci.http.build_query(data))
@@ -124,7 +124,7 @@ restore.inputtitle = _('恢复')
 restore.inputstyle = 'reset'
 
 function restore.write(self, section, value)
-    local url = '/cgi-bin/luci/admin/router-mode/apply?mode=restore'
+    local url = '/cgi-bin/luci/admin/easystart/apply?mode=restore'
     luci.http.redirect(url)
 end
 
