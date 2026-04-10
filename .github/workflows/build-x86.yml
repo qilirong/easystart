@@ -105,7 +105,17 @@ jobs:
     - name: Build plugin
       run: |
         cd openwrt
-        make package/luci-app-easystart/compile -j$(nproc) V=s
+        # 查看当前目录结构
+        ls -la
+        # 查看 package 目录中的插件
+        ls -la package/luci-app-easystart/
+        # 构建插件，增加详细输出
+        make package/luci-app-easystart/compile -j1 V=s || {
+          echo "Build failed, showing more details..."
+          # 查看构建日志
+          find . -name "*.log" -type f | xargs tail -n 50
+          exit 1
+        }
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
