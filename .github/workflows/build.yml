@@ -1,4 +1,4 @@
-name: Build OpenWrt Plugin for Cudy TR3000
+name: Build OpenWrt Plugin
 
 on:
   push:
@@ -7,9 +7,25 @@ on:
     branches: [ master ]
 
 jobs:
-  build-cudy-tr3000:
-    name: Build for Cudy TR3000
+  build:
+    name: Build for ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64
+            branch: openwrt-23.05
+            config: |
+              CONFIG_TARGET_x86=y
+              CONFIG_TARGET_x86_64=y
+              CONFIG_TARGET_x86_64_generic=y
+          - target: cudy-tr3000
+            branch: main
+            config: |
+              CONFIG_TARGET_mediatek=y
+              CONFIG_TARGET_mediatek_filogic=y
+              CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y
+
     steps:
     - uses: actions/checkout@v3
 
@@ -18,43 +34,51 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
 
-    - name: Clone OpenWrt source
+    - name: Clone OpenWrt source with shallow clone
       run: |
-        git clone https://github.com/openwrt/openwrt.git
+        git clone --depth 1 --branch ${{ matrix.branch }} https://github.com/openwrt/openwrt.git
         cd openwrt
-        git checkout main
+        git checkout ${{ matrix.branch }}
 
     - name: Cache downloads
       uses: actions/cache@v4
       with:
         path: openwrt/dl
-        key: ${{ runner.os }}-downloads-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        key: ${{ runner.os }}-downloads-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
-          ${{ runner.os }}-downloads-cudy-tr3000-
+          ${{ runner.os }}-downloads-${{ matrix.target }}-
 
     - name: Cache toolchain
       uses: actions/cache@v4
       with:
         path: openwrt/build_dir/toolchain
-        key: ${{ runner.os }}-toolchain-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        key: ${{ runner.os }}-toolchain-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
-          ${{ runner.os }}-toolchain-cudy-tr3000-
+          ${{ runner.os }}-toolchain-${{ matrix.target }}-
 
     - name: Cache staging directory
       uses: actions/cache@v4
       with:
         path: openwrt/staging_dir
-        key: ${{ runner.os }}-staging-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        key: ${{ runner.os }}-staging-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
-          ${{ runner.os }}-staging-cudy-tr3000-
+          ${{ runner.os }}-staging-${{ matrix.target }}-
 
     - name: Cache build directory
       uses: actions/cache@v4
       with:
         path: openwrt/build_dir/target-*
-        key: ${{ runner.os }}-build-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        key: ${{ runner.os }}-build-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
-          ${{ runner.os }}-build-cudy-tr3000-
+          ${{ runner.os }}-build-${{ matrix.target }}-
+
+    - name: Cache feeds directory
+      uses: actions/cache@v4
+      with:
+        path: openwrt/feeds
+        key: ${{ runner.os }}-feeds-${{ matrix.target }}-${{ hashFiles('openwrt/include/target.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-feeds-${{ matrix.target }}-
 
     - name: Add plugin to OpenWrt
       run: |
@@ -68,12 +92,10 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
-    - name: Configure build for Cudy TR3000
+    - name: Configure build
       run: |
         cd openwrt
-        echo "CONFIG_TARGET_mediatek=y" > .config
-        echo "CONFIG_TARGET_mediatek_filogic=y" >> .config
-        echo "CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y" >> .config
+        echo "${{ matrix.config }}" > .config
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         make defconfig
 
@@ -82,15 +104,15 @@ jobs:
         cd openwrt
         make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
 
-    - name: Build plugin for Cudy TR3000
+    - name: Build plugin
       run: |
         cd openwrt
         make package/luci-app-easystart/compile -j$(nproc) V=s
 
-    - name: Upload Cudy TR3000 artifacts
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: luci-app-easystart-cudy-tr3000
+        name: luci-app-easystart-${{ matrix.target }}
         path: openwrt/bin/packages/*/luci-app-easystart*.ipk
 
     - name: List built packages
@@ -101,12 +123,12 @@ jobs:
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ github.run_id }}-cudy-tr3000
-        name: Release ${{ github.run_id }} (Cudy TR3000)
+        tag_name: v${{ github.run_id }}-${{ matrix.target }}
+        name: Release ${{ github.run_id }} (${{ matrix.target }})
         body: |
           自动构建发布
           - 构建时间: ${{ github.run_started_at }}
-          - Cudy TR3000 架构
+          - ${{ matrix.target }} 架构
         files: |
           openwrt/bin/packages/*/luci-app-easystart*.ipk
         draft: false
