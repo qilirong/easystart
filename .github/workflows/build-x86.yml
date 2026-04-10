@@ -69,14 +69,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-feeds-x86_64-
 
-    - name: Cache toolchain
-      uses: actions/cache@v4
-      with:
-        path: openwrt/staging_dir/toolchain-*
-        key: ${{ runner.os }}-toolchain-x86_64
-        restore-keys: |
-          ${{ runner.os }}-toolchain-x86_64
-
     - name: Download and extract prebuilt toolchain
       run: |
         cd openwrt

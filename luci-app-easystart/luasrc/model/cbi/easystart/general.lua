@@ -45,7 +45,7 @@ mode_type:value('bridge', _('桥接模式（AP/交换机）'))
 mode_type.default = 'main'
 
 -- 传统路由模式参数
-local proto = mode:option(ListValue, 'proto', _('上网方式'))
+proto = mode:option(ListValue, 'proto', _('上网方式'))
 proto:depends('mode', 'main')
 proto:value('dhcp', _('动态 IP'))
 proto:value('pppoe', _('PPPoE 拨号'))
