@@ -24,6 +24,14 @@ jobs:
         cd openwrt
         git checkout main
 
+    - name: Cache downloads
+      uses: actions/cache@v4
+      with:
+        path: openwrt/dl
+        key: ${{ runner.os }}-downloads-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-downloads-cudy-tr3000-
+
     - name: Cache toolchain
       uses: actions/cache@v4
       with:
@@ -31,6 +39,22 @@ jobs:
         key: ${{ runner.os }}-toolchain-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
         restore-keys: |
           ${{ runner.os }}-toolchain-cudy-tr3000-
+
+    - name: Cache staging directory
+      uses: actions/cache@v4
+      with:
+        path: openwrt/staging_dir
+        key: ${{ runner.os }}-staging-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-staging-cudy-tr3000-
+
+    - name: Cache build directory
+      uses: actions/cache@v4
+      with:
+        path: openwrt/build_dir/target-*
+        key: ${{ runner.os }}-build-cudy-tr3000-${{ hashFiles('openwrt/include/target.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-build-cudy-tr3000-
 
     - name: Add plugin to OpenWrt
       run: |
