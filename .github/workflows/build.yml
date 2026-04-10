@@ -22,12 +22,6 @@ jobs:
               CONFIG_TARGET_x86=y
               CONFIG_TARGET_x86_64=y
               CONFIG_TARGET_x86_64_generic=y
-          - target: cudy-tr3000
-            branch: main
-            config: |
-              CONFIG_TARGET_mediatek=y
-              CONFIG_TARGET_mediatek_filogic=y
-              CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y
 
     steps:
     - uses: actions/checkout@v3
