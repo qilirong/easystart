@@ -1,0 +1,41 @@
+<div class="easystart-section">
+    <h3>传统路由模式配置</h3>
+    <div class="cbi-value">
+        <label for="cbid.easystart.general.proto">WAN连接类型:</label>
+        <select id="cbid.easystart.general.proto" name="cbid.easystart.general.proto">
+            <option value="dhcp">动态IP</option>
+            <option value="pppoe">PPPoE拨号</option>
+            <option value="static">静态IP</option>
+        </select>
+    </div>
+    
+    <div class="cbi-depends" data-depends="cbid.easystart.general.proto=pppoe">
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.username">用户名:</label>
+            <input type="text" id="cbid.easystart.general.username" name="cbid.easystart.general.username" value="">
+        </div>
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.password">密码:</label>
+            <input type="password" id="cbid.easystart.general.password" name="cbid.easystart.general.password" value="">
+        </div>
+    </div>
+    
+    <div class="cbi-depends" data-depends="cbid.easystart.general.proto=static">
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.ipaddr">IP地址:</label>
+            <input type="text" id="cbid.easystart.general.ipaddr" name="cbid.easystart.general.ipaddr" value="">
+        </div>
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.netmask">子网掩码:</label>
+            <input type="text" id="cbid.easystart.general.netmask" name="cbid.easystart.general.netmask" value="255.255.255.0">
+        </div>
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.gateway">网关:</label>
+            <input type="text" id="cbid.easystart.general.gateway" name="cbid.easystart.general.gateway" value="">
+        </div>
+        <div class="cbi-value">
+            <label for="cbid.easystart.general.dns">DNS服务器:</label>
+            <input type="text" id="cbid.easystart.general.dns" name="cbid.easystart.general.dns" value="114.114.114.114">
+        </div>
+    </div>
+</div>
