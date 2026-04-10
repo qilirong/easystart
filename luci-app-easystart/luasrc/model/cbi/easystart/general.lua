@@ -8,7 +8,7 @@ local _ = luci.i18n.translate
 m = Map('easystart', _('简易设置'), _('一键切换路由器工作模式，支持传统路由、旁路由、桥接模式'))
 
 -- 状态信息
-s = m:section(TypedSection, 'status', _('当前状态'))
+s = m:section(TypedSection, 'general', _('当前状态'))
 s.anonymous = true
 
 current_mode = s:option(DummyValue, 'current_mode', _('当前工作模式'))
@@ -35,7 +35,7 @@ lan_ip.value = function()
 end
 
 -- 模式选择
-mode = m:section(TypedSection, 'mode', _('模式选择'))
+mode = m:section(TypedSection, 'general', _('模式选择'))
 mode.anonymous = true
 
 mode_type = mode:option(ListValue, 'type', _('工作模式'))
