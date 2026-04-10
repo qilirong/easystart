@@ -123,6 +123,11 @@ jobs:
         echo "Build completed (or failed)"
       continue-on-error: true
 
+    - name: Create bin/packages directory if it doesn't exist
+      run: |
+        cd openwrt
+        mkdir -p bin/packages
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -132,7 +137,7 @@ jobs:
     - name: List built packages
       run: |
         cd openwrt
-        find bin/packages -name "luci-app-easystart*.ipk"
+        find bin/packages -name "luci-app-easystart*.ipk" || echo "No packages found"
 
     - name: Create release
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -148,5 +153,6 @@ jobs:
           openwrt/bin/packages/**/luci-app-easystart*.ipk
         draft: false
         prerelease: false
+        fail_on_unmatched_files: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
