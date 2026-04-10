@@ -61,6 +61,11 @@ jobs:
         name: luci-app-easystart-cudy-tr3000
         path: openwrt/bin/packages/*/luci-app-easystart*.ipk
 
+    - name: List built packages
+      run: |
+        cd openwrt
+        find bin/packages -name "luci-app-easystart*.ipk"
+
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
