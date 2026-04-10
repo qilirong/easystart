@@ -45,10 +45,15 @@ jobs:
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         make defconfig
 
+    - name: Build toolchain
+      run: |
+        cd openwrt
+        make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
+
     - name: Build plugin for x86_64
       run: |
         cd openwrt
-        make package/luci-app-easystart/compile V=s
+        make package/luci-app-easystart/compile -j$(nproc) V=s
 
     - name: Upload x86_64 artifacts
       uses: actions/upload-artifact@v4
@@ -94,10 +99,15 @@ jobs:
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
         make defconfig
 
+    - name: Build toolchain
+      run: |
+        cd openwrt
+        make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
+
     - name: Build plugin for Cudy TR3000
       run: |
         cd openwrt
-        make package/luci-app-easystart/compile V=s
+        make package/luci-app-easystart/compile -j$(nproc) V=s
 
     - name: Upload Cudy TR3000 artifacts
       uses: actions/upload-artifact@v4
