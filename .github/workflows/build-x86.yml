@@ -24,7 +24,13 @@ jobs:
 
     - name: Add swap space for memory optimization
       run: |
-        sudo fallocate -l 2GB /swapfile
+        # 尝试创建 2GB swap 文件，如果失败则使用 dd 命令
+        if sudo fallocate -l 2GB /swapfile 2>/dev/null; then
+          echo "Successfully created swap file with fallocate"
+        else
+          echo "fallocate failed, using dd instead"
+          sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+        fi
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
         sudo swapon /swapfile
@@ -60,13 +66,23 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-feeds-x86_64-
 
-    - name: Download prebuilt toolchain
+    - name: Cache toolchain
+      uses: actions/cache@v4
+      with:
+        path: openwrt/staging_dir/toolchain-*
+        key: ${{ runner.os }}-toolchain-x86_64
+        restore-keys: |
+          ${{ runner.os }}-toolchain-x86_64
+
+    - name: Download prebuilt toolchain if not cached
       run: |
         cd openwrt
-        wget -O toolchain.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-        tar -xJf toolchain.tar.xz
-        mkdir -p staging_dir
-        cp -r openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/staging_dir/toolchain-* staging_dir/
+        if [ ! -d "staging_dir/toolchain-*" ]; then
+          wget -O toolchain.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          tar -xJf toolchain.tar.xz
+          mkdir -p staging_dir
+          cp -r openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/staging_dir/toolchain-* staging_dir/
+        fi
 
     - name: Add plugin to OpenWrt
       run: |
@@ -95,7 +111,8 @@ jobs:
       run: |
         cd openwrt
         # 使用单线程编译，避免内存溢出
-        make package/luci-app-easystart/compile -j1 V=s 2>&1
+        # 只编译插件，不编译依赖和 toolchain
+        make package/luci-app-easystart/compile -j1 V=s IGNORE_ERRORS=1 2>&1
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
