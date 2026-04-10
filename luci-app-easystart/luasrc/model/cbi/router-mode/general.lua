@@ -1,7 +1,11 @@
 require 'luci.sys'
 require 'luci.http'
+require 'luci.i18n'
 
-m = Map('router-mode', _('路由模式切换'), _('一键切换路由器工作模式，支持传统路由、旁路由、桥接模式'))
+-- 加载翻译
+local _ = luci.i18n.translate
+
+m = Map('router-mode', _('简易设置'), _('一键切换路由器工作模式，支持传统路由、旁路由、桥接模式'))
 
 -- 状态信息
 s = m:section(TypedSection, 'status', _('当前状态'))

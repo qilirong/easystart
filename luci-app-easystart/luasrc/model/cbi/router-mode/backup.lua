@@ -1,4 +1,8 @@
 require 'luci.sys'
+require 'luci.i18n'
+
+-- 加载翻译
+local _ = luci.i18n.translate
 
 m = Map('router-mode', _('配置备份'), _('管理路由模式切换的配置备份'))
 
