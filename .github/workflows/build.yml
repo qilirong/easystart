@@ -35,7 +35,8 @@ jobs:
     - name: Setup environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
+        sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 python3-distutils
+        sudo apt-get install -y flex bison texinfo
 
     - name: Clone OpenWrt source with shallow clone
       run: |
@@ -120,7 +121,8 @@ jobs:
       if: steps.check_toolchain.outputs.toolchain_exists == 'false'
       run: |
         cd openwrt
-        make toolchain/install -j$(nproc) || make toolchain/install -j1 V=s
+        # 使用保守的并行度，避免内存问题
+        make toolchain/install -j2 V=s || make toolchain/install -j1 V=s
 
     - name: Build plugin
       run: |
