@@ -39,61 +39,52 @@ jobs:
         echo "Swap space setup completed (or skipped)"
       continue-on-error: true
 
-    - name: Clone OpenWrt source with shallow clone
+    - name: Clean up previous OpenWrt directory
       run: |
-        git clone --depth 1 --branch openwrt-23.05 https://github.com/openwrt/openwrt.git
-        cd openwrt
-        git checkout openwrt-23.05
+        rm -rf openwrt
+        mkdir -p openwrt
 
-    - name: Cache downloads
-      uses: actions/cache@v4
-      with:
-        path: openwrt/dl
-        key: ${{ runner.os }}-downloads-x86_64-${{ hashFiles('openwrt/include/target.mk') }}
-        restore-keys: |
-          ${{ runner.os }}-downloads-x86_64-
 
-    - name: Cache build directory
-      uses: actions/cache@v4
-      with:
-        path: openwrt/build_dir/target-*
-        key: ${{ runner.os }}-build-x86_64-${{ hashFiles('openwrt/include/target.mk') }}
-        restore-keys: |
-          ${{ runner.os }}-build-x86_64-
 
-    - name: Cache feeds directory
-      uses: actions/cache@v4
-      with:
-        path: openwrt/feeds
-        key: ${{ runner.os }}-feeds-x86_64-${{ hashFiles('openwrt/include/target.mk') }}
-        restore-keys: |
-          ${{ runner.os }}-feeds-x86_64-
-
-    - name: Download and extract prebuilt toolchain
+    - name: Download and extract prebuilt SDK from OpenWrt官网
       run: |
         cd openwrt
-        # 下载并提取完整的 SDK，而不仅仅是 toolchain
+        # 下载OpenWrt官网的预编译SDK
+        echo "Downloading prebuilt SDK from OpenWrt官网..."
         wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+        
         # 检查下载是否成功
         if [ ! -f sdk.tar.xz ]; then
-          echo "Error: Failed to download SDK"
+          echo "Error: Failed to download SDK from OpenWrt官网"
           exit 1
         fi
-        # 解压 SDK
+        
+        # 解压SDK
+        echo "Extracting SDK..."
         tar -xJf sdk.tar.xz
+        
         # 检查解压是否成功
         if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
           echo "Error: Failed to extract SDK"
           exit 1
         fi
-        # 将 SDK 内容复制到当前目录
-        cp -r openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
-        # 检查复制是否成功
+        
+        # 移动SDK内容到当前目录
+        echo "Moving SDK files to current directory..."
+        mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
+        mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
+        
+        # 清理临时目录
+        rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
+        
+        # 检查SDK是否正确设置
         if [ ! -f "Makefile" ]; then
-          echo "Error: Failed to copy SDK files"
+          echo "Error: Failed to set up SDK files"
           exit 1
         fi
+        
         # 查看当前目录结构
+        echo "SDK setup completed. Directory structure:"
         ls -la
 
     - name: Add plugin to OpenWrt
@@ -102,42 +93,31 @@ jobs:
         mkdir -p package/luci-app-easystart
         cp -r ../luci-app-easystart/* package/luci-app-easystart/
 
-    - name: Update feeds
+    - name: Update feeds and configure build
       run: |
         cd openwrt
+        # 更新feeds
+        echo "Updating feeds..."
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-
-    - name: Configure build
-      run: |
-        cd openwrt
+        
+        # 配置构建
+        echo "Configuring build..."
         echo "CONFIG_TARGET_x86=y" > .config
         echo "CONFIG_TARGET_x86_64=y" >> .config
         echo "CONFIG_TARGET_x86_64_generic=y" >> .config
         echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
-        # 禁用 ccache 以节省内存
         echo "CONFIG_CCACHE=n" >> .config
-        # 禁用 toolchain 编译，使用预编译的 toolchain
-        echo "CONFIG_TOOLCHAIN=y" >> .config
         make defconfig
 
-    - name: Build plugin
+    - name: Build plugin using prebuilt SDK
       run: |
         cd openwrt
         # 使用单线程编译，避免内存溢出
-        echo "开始编译插件..."
-        # 首先更新 feeds，确保所有依赖可用
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
-        # 配置构建
-        echo "CONFIG_TARGET_x86=y" > .config
-        echo "CONFIG_TARGET_x86_64=y" >> .config
-        echo "CONFIG_TARGET_x86_64_generic=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
-        echo "CONFIG_CCACHE=n" >> .config
-        make defconfig
-        # 只编译插件及其依赖
+        echo "Building plugin using prebuilt SDK..."
+        # 只编译插件及其依赖，不编译toolchain
         make package/luci-app-easystart/compile -j1 V=s
+        
         # 检查编译是否成功
         if [ $? -eq 0 ]; then
           echo "插件编译成功！"
