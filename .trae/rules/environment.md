@@ -11,3 +11,6 @@ istoreOS(openwrt调试路由器)
 -IP 192.168.89.128
 -用户名 root
 -密码 秘钥
+
+本地 
+-优先使用git-bash作为默认shell
