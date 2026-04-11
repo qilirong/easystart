@@ -22,70 +22,66 @@ jobs:
         sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
         sudo apt-get install -y flex bison texinfo
 
-    - name: Add swap space for memory optimization
-      run: |
-        # 尝试创建 2GB swap 文件，忽略错误继续执行
-        echo "Attempting to create swap space..."
-        sudo fallocate -l 2GB /swapfile 2>/dev/null || true
-        if [ -f /swapfile ]; then
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile 2>/dev/null || true
-          sudo swapon /swapfile 2>/dev/null || true
-          free -h
-        else
-          echo "Swap file creation failed, continuing without swap..."
-          free -h
-        fi
-        echo "Swap space setup completed (or skipped)"
-      continue-on-error: true
+    - name: Cache prebuilt SDK
+      uses: actions/cache@v3
+      with:
+        path: openwrt
+        key: openwrt-sdk-x86_64
+        restore-keys: |
+          openwrt-sdk-x86_64
 
-    - name: Clean up previous OpenWrt directory
+    - name: Create OpenWrt directory if it doesn't exist
       run: |
-        rm -rf openwrt
         mkdir -p openwrt
 
 
 
-    - name: Download and extract prebuilt SDK from OpenWrt官网
+    - name: Download and extract prebuilt SDK from OpenWrt官网 (if needed)
       run: |
         cd openwrt
-        # 下载OpenWrt官网的预编译SDK
-        echo "Downloading prebuilt SDK from OpenWrt官网..."
-        wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-        
-        # 检查下载是否成功
-        if [ ! -f sdk.tar.xz ]; then
-          echo "Error: Failed to download SDK from OpenWrt官网"
-          exit 1
+        # 检查SDK是否已经存在
+        if [ -f "Makefile" ]; then
+          echo "SDK already exists, skipping download and extraction..."
+        else
+          # 下载OpenWrt官网的预编译SDK
+          echo "Downloading prebuilt SDK from OpenWrt官网..."
+          wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          
+          # 检查下载是否成功
+          if [ ! -f sdk.tar.xz ]; then
+            echo "Error: Failed to download SDK from OpenWrt官网"
+            exit 1
+          fi
+          
+          # 解压SDK
+          echo "Extracting SDK..."
+          tar -xJf sdk.tar.xz
+          
+          # 检查解压是否成功
+          if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
+            echo "Error: Failed to extract SDK"
+            exit 1
+          fi
+          
+          # 移动SDK内容到当前目录
+          echo "Moving SDK files to current directory..."
+          mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
+          mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
+          
+          # 清理临时目录
+          rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
+          rm -f sdk.tar.xz
+          
+          # 检查SDK是否正确设置
+          if [ ! -f "Makefile" ]; then
+            echo "Error: Failed to set up SDK files"
+            exit 1
+          fi
+          
+          # 查看当前目录结构
+          echo "SDK setup completed. Directory structure:"
+          ls -la
         fi
-        
-        # 解压SDK
-        echo "Extracting SDK..."
-        tar -xJf sdk.tar.xz
-        
-        # 检查解压是否成功
-        if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
-          echo "Error: Failed to extract SDK"
-          exit 1
-        fi
-        
-        # 移动SDK内容到当前目录
-        echo "Moving SDK files to current directory..."
-        mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
-        mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
-        
-        # 清理临时目录
-        rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
-        
-        # 检查SDK是否正确设置
-        if [ ! -f "Makefile" ]; then
-          echo "Error: Failed to set up SDK files"
-          exit 1
-        fi
-        
-        # 查看当前目录结构
-        echo "SDK setup completed. Directory structure:"
-        ls -la
 
     - name: Add plugin to OpenWrt
       run: |
