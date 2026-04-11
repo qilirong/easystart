@@ -4,7 +4,7 @@
 ROUTER_IP="192.168.89.128"
 ROUTER_USER="root"
 PACKAGE_NAME="luci-app-easystart"
-PACKAGE_FILE="output/luci-app-easystart_1.0-1_all.ipk"
+PACKAGE_FILE="output/luci-app-easystart_1.0-2_all.ipk"
 
 echo "=== 开始安装插件到路由器 ==="
 echo "路由器IP: ${ROUTER_IP}"
@@ -36,7 +36,7 @@ fi
 # 步骤2: 上传IPK文件
 echo ""
 echo "2. 上传IPK文件到路由器..."
-scp -o StrictHostKeyChecking=no ${PACKAGE_FILE} ${ROUTER_USER}@${ROUTER_IP}:/tmp/
+scp -o StrictHostKeyChecking=no ${PACKAGE_FILE} ${ROUTER_USER}@${ROUTER_IP}:/tmp/luci-app-easystart_1.0-2_all.ipk
 if [ $? -ne 0 ]; then
     echo "错误: 上传IPK文件失败"
     exit 1
@@ -46,7 +46,7 @@ echo "   上传成功"
 # 步骤3: 安装新版本
 echo ""
 echo "3. 安装新版本..."
-ssh -o StrictHostKeyChecking=no ${ROUTER_USER}@${ROUTER_IP} "opkg install /tmp/luci-app-easystart_1.0-1_all.ipk"
+ssh -o StrictHostKeyChecking=no ${ROUTER_USER}@${ROUTER_IP} "opkg install /tmp/luci-app-easystart_1.0-2_all.ipk"
 if [ $? -ne 0 ]; then
     echo "错误: 安装失败"
     exit 1
@@ -62,7 +62,7 @@ echo "   LuCI已重启"
 # 步骤5: 清理临时文件
 echo ""
 echo "5. 清理临时文件..."
-ssh -o StrictHostKeyChecking=no ${ROUTER_USER}@${ROUTER_IP} "rm -f /tmp/luci-app-easystart_1.0-1_all.ipk"
+ssh -o StrictHostKeyChecking=no ${ROUTER_USER}@${ROUTER_IP} "rm -f /tmp/luci-app-easystart_1.0-2_all.ipk"
 echo "   清理完成"
 
 echo ""
