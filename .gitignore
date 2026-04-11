@@ -5,6 +5,3 @@ openwrt-sdk-*.tar.xz
 .trae/
 .workbuddy/
 *.ipk
-deps_installed
-h -c *
-*.md
