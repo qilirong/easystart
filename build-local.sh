@@ -50,41 +50,43 @@ mkdir -p openwrt
 
 echo "OpenWrt目录准备完成（保留已有的环境）"
 
-# 步骤4: 下载并提取预编译SDK（如果需要）
-echo "步骤4: 下载并提取预编译SDK..."
+# 步骤4: 使用本地预编译SDK（如果需要）
+echo "步骤4: 提取预编译SDK..."
 cd openwrt
 
 # 检查SDK是否已经设置好
 if [ -f "Makefile" ]; then
-  echo "SDK已经存在，跳过下载和提取步骤..."
+  echo "SDK已经存在，跳过提取步骤..."
 else
-  # 下载OpenWrt官网的预编译SDK
-  echo "从OpenWrt官网下载预编译SDK..."
-  wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-
-  # 检查下载是否成功
-  if [ ! -f sdk.tar.xz ]; then
-    echo "错误: 无法从OpenWrt官网下载SDK"
+  # 检查本地SDK文件是否存在
+  if [ -f "../openwrt-sdk-23.05.5-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" ]; then
+    echo "使用本地SDK文件..."
+    cp ../openwrt-sdk-23.05.5-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz .
+    SDK_FILE="openwrt-sdk-23.05.5-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+    SDK_DIR="openwrt-sdk-23.05.5-x86-64_gcc-12.3.0_musl.Linux-x86_64"
+  else
+    echo "错误: 本地SDK文件不存在"
     exit 1
   fi
 
   # 解压SDK
   echo "解压SDK..."
-  tar -xJf sdk.tar.xz
+  tar -xJf "$SDK_FILE"
 
   # 检查解压是否成功
-  if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
+  if [ ! -d "$SDK_DIR" ]; then
     echo "错误: 无法解压SDK"
     exit 1
   fi
 
   # 移动SDK内容到当前目录
   echo "移动SDK文件到当前目录..."
-  mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
-  mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
+  mv "$SDK_DIR"/* .
+  mv "$SDK_DIR"/.* . 2>/dev/null || true
 
   # 清理临时目录
-  rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
+  rm -rf "$SDK_DIR"
+  rm -f "$SDK_FILE"
 
   # 检查SDK是否正确设置
   if [ ! -f "Makefile" ]; then
