@@ -22,13 +22,15 @@ jobs:
         sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
         sudo apt-get install -y flex bison texinfo
 
-    - name: Cache prebuilt SDK
+    - name: Cache build artifacts
       uses: actions/cache@v3
       with:
-        path: openwrt
-        key: openwrt-sdk-x86_64
+        path: |
+          openwrt/build_dir
+          openwrt/dl
+        key: openwrt-build-x86_64-${{ hashFiles('luci-app-easystart/**') }}
         restore-keys: |
-          openwrt-sdk-x86_64
+          openwrt-build-x86_64-
 
     - name: Create OpenWrt directory if it doesn't exist
       run: |
@@ -120,24 +122,30 @@ jobs:
         # 查看luci-app-easystart目录内容
         echo "luci-app-easystart directory contents:"
         ls -la package/luci-app-easystart/
+        # 查看Makefile内容
+        echo "Makefile content:"
+        cat package/luci-app-easystart/Makefile
         # 只编译插件及其依赖，不编译toolchain
-        make package/luci-app-easystart/compile -j1 V=s
-        
-        # 检查编译是否成功
-        if [ $? -eq 0 ]; then
-          echo "插件编译成功！"
-        else
+        echo "Starting compilation..."
+        make package/luci-app-easystart/compile -j1 V=s || {
           echo "插件编译失败，查看详细日志..."
           # 查看构建日志
-          find . -name "*.log" -type f | xargs tail -n 100
+          find . -name "*.log" -type f | xargs tail -n 100 2>/dev/null || echo "No log files found"
           # 查看bin目录结构
           echo "Bin directory structure:"
           ls -la bin/ 2>/dev/null || echo "Bin directory not found"
           # 查看packages目录结构
           echo "Packages directory structure:"
           ls -la bin/packages/ 2>/dev/null || echo "Packages directory not found"
+          # 查看构建目录结构
+          echo "Build directory structure:"
+          ls -la build_dir/ 2>/dev/null || echo "Build directory not found"
           exit 1
-        fi
+        }
+        echo "插件编译成功！"
+        # 查看编译产物
+        echo "Compiled packages:"
+        find bin/packages -name "luci-app-easystart*.ipk" 2>/dev/null || echo "No packages found"
 
     - name: Create bin/packages directory if it doesn't exist
       run: |
