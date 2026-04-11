@@ -2,11 +2,14 @@
 
 # 本地Ubuntu编译脚本
 # 基于GitHub workflow逻辑，但在本地Ubuntu环境中运行
+# 使用环境配置: .trae/rules/environment.md
 
 set -e
 
 echo "========================================"
 echo "开始本地编译 luci-app-easystart 插件"
+echo "========================================"
+echo "使用环境: Ubuntu (IP: 192.168.89.129, 用户名: haha)"
 echo "========================================"
 
 # 检查是否在Ubuntu环境中运行
@@ -17,21 +20,22 @@ fi
 
 # 步骤1: 安装构建依赖
 echo "步骤1: 安装构建依赖..."
-sudo apt update
-sudo apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
-sudo apt install -y flex bison texinfo
+# 尝试使用apt-get安装依赖，忽略错误继续执行
+apt update 2>/dev/null || true
+apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 2>/dev/null || true
+apt install -y flex bison texinfo 2>/dev/null || true
 
-echo "依赖安装完成"
+echo "依赖安装完成（如果失败，请手动安装依赖）"
 
 # 步骤2: 添加交换空间（可选但推荐）
 echo "步骤2: 添加交换空间..."
 # 尝试创建 2GB swap 文件，忽略错误继续执行
 echo "尝试创建 2GB swap 文件..."
-sudo fallocate -l 2GB /swapfile 2>/dev/null || true
+fallocate -l 2GB /swapfile 2>/dev/null || true
 if [ -f /swapfile ]; then
-  sudo chmod 600 /swapfile
-  sudo mkswap /swapfile 2>/dev/null || true
-  sudo swapon /swapfile 2>/dev/null || true
+  chmod 600 /swapfile 2>/dev/null || true
+  mkswap /swapfile 2>/dev/null || true
+  swapon /swapfile 2>/dev/null || true
   free -h
 else
   echo "Swap 文件创建失败，继续执行..."
@@ -155,8 +159,8 @@ echo "步骤9: 清理..."
 
 # 关闭交换空间（如果创建了）
 if [ -f /swapfile ]; then
-  sudo swapoff /swapfile 2>/dev/null || true
-  sudo rm -f /swapfile 2>/dev/null || true
+  swapoff /swapfile 2>/dev/null || true
+  rm -f /swapfile 2>/dev/null || true
   echo "交换空间已清理"
 fi
 
