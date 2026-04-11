@@ -1,8 +1,9 @@
 module('luci.controller.easystart', package.seeall)
 
 function index()
-    entry({'admin', 'easystart'}, alias('admin', 'easystart', 'general'), _('简易设置'), 10)
-    entry({'admin', 'easystart', 'general'}, cbi('easystart/general'), _('模式配置'), 1)
+    entry({'admin', 'easystart'}, firstchild(), _('便捷设置'), 10)
+    entry({'admin', 'easystart', 'general'}, cbi('easystart/general'), _('联网设置'), 1)
+    entry({'admin', 'easystart', 'ap'}, cbi('easystart/ap'), _('AP设置'), 2)
     entry({'admin', 'easystart', 'apply'}, call('action_apply')).dependent = false
     entry({'admin', 'easystart', 'status'}, call('action_status')).dependent = false
 end
