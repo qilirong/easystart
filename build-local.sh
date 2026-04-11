@@ -1,0 +1,171 @@
+#!/bin/bash
+
+# 本地Ubuntu编译脚本
+# 基于GitHub workflow逻辑，但在本地Ubuntu环境中运行
+
+set -e
+
+echo "========================================"
+echo "开始本地编译 luci-app-easystart 插件"
+echo "========================================"
+
+# 检查是否在Ubuntu环境中运行
+if [[ "$(lsb_release -si)" != "Ubuntu" ]]; then
+    echo "错误: 此脚本仅在Ubuntu环境中运行"
+    exit 1
+fi
+
+# 步骤1: 安装构建依赖
+echo "步骤1: 安装构建依赖..."
+sudo apt update
+sudo apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
+sudo apt install -y flex bison texinfo
+
+echo "依赖安装完成"
+
+# 步骤2: 添加交换空间（可选但推荐）
+echo "步骤2: 添加交换空间..."
+# 尝试创建 2GB swap 文件，忽略错误继续执行
+echo "尝试创建 2GB swap 文件..."
+sudo fallocate -l 2GB /swapfile 2>/dev/null || true
+if [ -f /swapfile ]; then
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile 2>/dev/null || true
+  sudo swapon /swapfile 2>/dev/null || true
+  free -h
+else
+  echo "Swap 文件创建失败，继续执行..."
+  free -h
+fi
+echo "交换空间设置完成"
+
+# 步骤3: 清理并准备OpenWrt目录
+echo "步骤3: 清理并准备OpenWrt目录..."
+rm -rf openwrt
+mkdir -p openwrt
+
+echo "OpenWrt目录准备完成"
+
+# 步骤4: 下载并提取预编译SDK
+echo "步骤4: 下载并提取预编译SDK..."
+cd openwrt
+
+# 下载OpenWrt官网的预编译SDK
+echo "从OpenWrt官网下载预编译SDK..."
+wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+
+# 检查下载是否成功
+if [ ! -f sdk.tar.xz ]; then
+  echo "错误: 无法从OpenWrt官网下载SDK"
+  exit 1
+fi
+
+# 解压SDK
+echo "解压SDK..."
+tar -xJf sdk.tar.xz
+
+# 检查解压是否成功
+if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
+  echo "错误: 无法解压SDK"
+  exit 1
+fi
+
+# 移动SDK内容到当前目录
+echo "移动SDK文件到当前目录..."
+mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
+mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
+
+# 清理临时目录
+rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
+
+# 检查SDK是否正确设置
+if [ ! -f "Makefile" ]; then
+  echo "错误: SDK文件设置失败"
+  exit 1
+fi
+
+# 查看当前目录结构
+echo "SDK设置完成。目录结构:"
+ls -la
+
+# 步骤5: 添加插件到OpenWrt
+echo "步骤5: 添加插件到OpenWrt..."
+mkdir -p package/luci-app-easystart
+cp -r ../luci-app-easystart/* package/luci-app-easystart/
+
+echo "插件添加完成"
+
+# 步骤6: 更新feeds并配置构建
+echo "步骤6: 更新feeds并配置构建..."
+
+# 更新feeds
+echo "更新feeds..."
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+# 配置构建
+echo "配置构建..."
+echo "CONFIG_TARGET_x86=y" > .config
+echo "CONFIG_TARGET_x86_64=y" >> .config
+echo "CONFIG_TARGET_x86_64_generic=y" >> .config
+echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
+echo "CONFIG_CCACHE=n" >> .config
+make defconfig
+
+echo "构建配置完成"
+
+# 步骤7: 编译插件
+echo "步骤7: 编译插件..."
+
+# 使用单线程编译，避免内存溢出
+echo "使用预编译SDK编译插件..."
+# 只编译插件及其依赖，不编译toolchain
+make package/luci-app-easystart/compile -j1 V=s
+
+# 检查编译是否成功
+if [ $? -eq 0 ]; then
+  echo "插件编译成功！"
+else
+  echo "插件编译失败，查看详细日志..."
+  # 查看构建日志
+  find . -name "*.log" -type f | xargs tail -n 100
+  exit 1
+fi
+
+# 步骤8: 查看编译产物
+echo "步骤8: 查看编译产物..."
+
+# 创建bin/packages目录（如果不存在）
+mkdir -p bin/packages
+
+# 查找编译生成的IPK文件
+echo "查找编译生成的IPK文件:"
+find bin/packages -name "luci-app-easystart*.ipk" || echo "未找到编译产物"
+
+# 复制编译产物到desktop目录
+echo "复制编译产物到desktop目录..."
+DESKTOP_DIR="$HOME/Desktop"
+mkdir -p "$DESKTOP_DIR/openwrt-build-output"
+cp bin/packages/*/luci-app-easystart*.ipk "$DESKTOP_DIR/openwrt-build-output/" 2>/dev/null || true
+
+echo "编译产物已复制到 $DESKTOP_DIR/openwrt-build-output/ 目录"
+
+# 步骤9: 清理
+echo "步骤9: 清理..."
+
+# 关闭交换空间（如果创建了）
+if [ -f /swapfile ]; then
+  sudo swapoff /swapfile 2>/dev/null || true
+  sudo rm -f /swapfile 2>/dev/null || true
+  echo "交换空间已清理"
+fi
+
+echo "========================================"
+echo "本地编译完成！"
+echo "========================================"
+echo "编译产物位于: $DESKTOP_DIR/openwrt-build-output/"
+echo ""
+echo "要安装插件到路由器，请执行:"
+echo "scp "$DESKTOP_DIR/openwrt-build-output/luci-app-easystart*.ipk" root@192.168.89.128:/tmp/"
+echo "然后登录路由器执行: opkg install /tmp/luci-app-easystart*.ipk"
+echo "========================================"
