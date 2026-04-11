@@ -43,61 +43,67 @@ else
 fi
 echo "交换空间设置完成"
 
-# 步骤3: 清理并准备OpenWrt目录
-echo "步骤3: 清理并准备OpenWrt目录..."
-rm -rf openwrt
+# 步骤3: 准备OpenWrt目录（保留已有的环境）
+echo "步骤3: 准备OpenWrt目录..."
+# 只创建目录，不删除已有的内容，保留之前的环境
 mkdir -p openwrt
 
-echo "OpenWrt目录准备完成"
+echo "OpenWrt目录准备完成（保留已有的环境）"
 
-# 步骤4: 下载并提取预编译SDK
+# 步骤4: 下载并提取预编译SDK（如果需要）
 echo "步骤4: 下载并提取预编译SDK..."
 cd openwrt
 
-# 下载OpenWrt官网的预编译SDK
-echo "从OpenWrt官网下载预编译SDK..."
-wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+# 检查SDK是否已经设置好
+if [ -f "Makefile" ]; then
+  echo "SDK已经存在，跳过下载和提取步骤..."
+else
+  # 下载OpenWrt官网的预编译SDK
+  echo "从OpenWrt官网下载预编译SDK..."
+  wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
 
-# 检查下载是否成功
-if [ ! -f sdk.tar.xz ]; then
-  echo "错误: 无法从OpenWrt官网下载SDK"
-  exit 1
+  # 检查下载是否成功
+  if [ ! -f sdk.tar.xz ]; then
+    echo "错误: 无法从OpenWrt官网下载SDK"
+    exit 1
+  fi
+
+  # 解压SDK
+  echo "解压SDK..."
+  tar -xJf sdk.tar.xz
+
+  # 检查解压是否成功
+  if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
+    echo "错误: 无法解压SDK"
+    exit 1
+  fi
+
+  # 移动SDK内容到当前目录
+  echo "移动SDK文件到当前目录..."
+  mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
+  mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
+
+  # 清理临时目录
+  rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
+
+  # 检查SDK是否正确设置
+  if [ ! -f "Makefile" ]; then
+    echo "错误: SDK文件设置失败"
+    exit 1
+  fi
+
+  # 查看当前目录结构
+  echo "SDK设置完成。目录结构:"
+  ls -la
 fi
 
-# 解压SDK
-echo "解压SDK..."
-tar -xJf sdk.tar.xz
-
-# 检查解压是否成功
-if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
-  echo "错误: 无法解压SDK"
-  exit 1
-fi
-
-# 移动SDK内容到当前目录
-echo "移动SDK文件到当前目录..."
-mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
-mv openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/.* . 2>/dev/null || true
-
-# 清理临时目录
-rm -rf openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64
-
-# 检查SDK是否正确设置
-if [ ! -f "Makefile" ]; then
-  echo "错误: SDK文件设置失败"
-  exit 1
-fi
-
-# 查看当前目录结构
-echo "SDK设置完成。目录结构:"
-ls -la
-
-# 步骤5: 添加插件到OpenWrt
+# 步骤5: 添加插件到OpenWrt（更新插件文件）
 echo "步骤5: 添加插件到OpenWrt..."
 mkdir -p package/luci-app-easystart
+# 复制插件文件，覆盖已有的文件以确保使用最新版本
 cp -r ../luci-app-easystart/* package/luci-app-easystart/
 
-echo "插件添加完成"
+echo "插件添加完成（已更新到最新版本）"
 
 # 步骤6: 更新feeds并配置构建
 echo "步骤6: 更新feeds并配置构建..."
