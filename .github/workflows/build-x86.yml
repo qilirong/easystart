@@ -115,6 +115,15 @@ jobs:
         cd openwrt
         # 使用单线程编译，避免内存溢出
         echo "Building plugin using prebuilt SDK..."
+        # 查看当前目录结构
+        echo "Current directory structure:"
+        ls -la
+        # 查看package目录结构
+        echo "Package directory structure:"
+        ls -la package/
+        # 查看luci-app-easystart目录内容
+        echo "luci-app-easystart directory contents:"
+        ls -la package/luci-app-easystart/
         # 只编译插件及其依赖，不编译toolchain
         make package/luci-app-easystart/compile -j1 V=s
         
@@ -125,6 +134,12 @@ jobs:
           echo "插件编译失败，查看详细日志..."
           # 查看构建日志
           find . -name "*.log" -type f | xargs tail -n 100
+          # 查看bin目录结构
+          echo "Bin directory structure:"
+          ls -la bin/ 2>/dev/null || echo "Bin directory not found"
+          # 查看packages目录结构
+          echo "Packages directory structure:"
+          ls -la bin/packages/ 2>/dev/null || echo "Packages directory not found"
           exit 1
         fi
 
