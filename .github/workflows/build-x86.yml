@@ -74,9 +74,27 @@ jobs:
         cd openwrt
         # 下载并提取完整的 SDK，而不仅仅是 toolchain
         wget -O sdk.tar.xz https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+        # 检查下载是否成功
+        if [ ! -f sdk.tar.xz ]; then
+          echo "Error: Failed to download SDK"
+          exit 1
+        fi
+        # 解压 SDK
         tar -xJf sdk.tar.xz
+        # 检查解压是否成功
+        if [ ! -d "openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64" ]; then
+          echo "Error: Failed to extract SDK"
+          exit 1
+        fi
         # 将 SDK 内容复制到当前目录
         cp -r openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64/* .
+        # 检查复制是否成功
+        if [ ! -f "Makefile" ]; then
+          echo "Error: Failed to copy SDK files"
+          exit 1
+        fi
+        # 查看当前目录结构
+        ls -la
 
     - name: Add plugin to OpenWrt
       run: |
@@ -107,12 +125,28 @@ jobs:
       run: |
         cd openwrt
         # 使用单线程编译，避免内存溢出
-        # 只编译插件，不编译依赖和 toolchain
-        make package/luci-app-easystart/compile -j1 V=s IGNORE_ERRORS=1 2>&1 || true
-        # 尝试直接安装插件，跳过依赖编译
-        make package/luci-app-easystart/install -j1 V=s IGNORE_ERRORS=1 2>&1 || true
-        echo "Build completed (or failed)"
-      continue-on-error: true
+        echo "开始编译插件..."
+        # 首先更新 feeds，确保所有依赖可用
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        # 配置构建
+        echo "CONFIG_TARGET_x86=y" > .config
+        echo "CONFIG_TARGET_x86_64=y" >> .config
+        echo "CONFIG_TARGET_x86_64_generic=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
+        echo "CONFIG_CCACHE=n" >> .config
+        make defconfig
+        # 只编译插件及其依赖
+        make package/luci-app-easystart/compile -j1 V=s
+        # 检查编译是否成功
+        if [ $? -eq 0 ]; then
+          echo "插件编译成功！"
+        else
+          echo "插件编译失败，查看详细日志..."
+          # 查看构建日志
+          find . -name "*.log" -type f | xargs tail -n 100
+          exit 1
+        fi
 
     - name: Create bin/packages directory if it doesn't exist
       run: |
