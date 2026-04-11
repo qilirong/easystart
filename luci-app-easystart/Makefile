@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-easystart
 PKG_VERSION:=1.1
-PKG_RELEASE:=$(shell cat $(CURDIR)/VERSION 2>/dev/null || echo 0)
+PKG_RELEASE:=0
 
 PKG_MAINTAINER:=1079894799@qq.com
 PKG_LICENSE:=GPL-2.0
