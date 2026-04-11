@@ -20,6 +20,8 @@ else
   echo "SDK已经存在，跳过提取步骤"
 fi
 
+# 清理旧的package目录，确保使用最新文件
+rm -rf package/luci-app-easystart
 mkdir -p package/luci-app-easystart
 cp -r ../luci-app-easystart/* package/luci-app-easystart/
 
@@ -46,6 +48,8 @@ echo "CONFIG_PACKAGE_luci-app-easystart=y" >> .config
 echo "CONFIG_CCACHE=n" >> .config
 make defconfig
 
+# 先清理，再编译，确保使用最新文件
+make package/luci-app-easystart/clean V=s
 make package/luci-app-easystart/compile -j1 V=s
 
 mkdir -p ../output
