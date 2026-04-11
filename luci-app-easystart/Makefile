@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-easystart
-PKG_VERSION:=1.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.1
+PKG_RELEASE:=$(shell cat $(CURDIR)/VERSION 2>/dev/null || echo 0)
 
-PKG_MAINTAINER:=Qili Rong <qilirong@163.com>
+PKG_MAINTAINER:=1079894799@qq.com
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -38,6 +38,8 @@ define Package/luci-app-easystart/install
 
 	# 安装CBI模型文件
 	$(INSTALL_DATA) $(CURDIR)/luasrc/model/cbi/easystart/general.lua $(1)/usr/lib/lua/luci/model/cbi/easystart/
+	$(INSTALL_DATA) $(CURDIR)/luasrc/model/cbi/easystart/ap.lua $(1)/usr/lib/lua/luci/model/cbi/easystart/
+	$(INSTALL_DATA) $(CURDIR)/VERSION $(1)/usr/lib/lua/luci/
 
 	# 安装视图文件
 	$(INSTALL_DATA) $(CURDIR)/luasrc/view/easystart/*.htm $(1)/usr/lib/lua/luci/view/easystart/
