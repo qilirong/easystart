@@ -20,10 +20,10 @@ fi
 
 # 步骤1: 安装构建依赖
 echo "步骤1: 安装构建依赖..."
-# 安装必要的构建依赖，使用sudo并在失败时停止执行
-sudo apt update
-sudo apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 make
-sudo apt install -y flex bison texinfo
+# 安装必要的构建依赖，尝试使用apt安装，忽略错误继续执行
+apt update 2>/dev/null || true
+apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 make 2>/dev/null || true
+apt install -y flex bison texinfo 2>/dev/null || true
 
 echo "依赖安装完成（如果失败，请手动安装依赖）"
 
