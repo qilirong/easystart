@@ -22,7 +22,7 @@ fi
 echo "步骤1: 安装构建依赖..."
 # 尝试使用apt-get安装依赖，忽略错误继续执行
 apt update 2>/dev/null || true
-apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 2>/dev/null || true
+apt install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 make 2>/dev/null || true
 apt install -y flex bison texinfo 2>/dev/null || true
 
 echo "依赖安装完成（如果失败，请手动安装依赖）"
